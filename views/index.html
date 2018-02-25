@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tac</title>
+    <link href="/static/layui/css/layui.css" rel="stylesheet">
+    <link href="/static/css/index.css" rel="stylesheet">
+    <script src="/static/layui/layui.js"></script>
+    <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon" />
+</head>
+<body>
+<div class="fly-header layui-bg-black">
+    <div class="layui-container">
+        <ul class="layui-nav">
+            <li class="layui-nav-item {{if .Request_url}}{{if eq "/" .Request_url}}layui-this{{end}}{{end}}" >
+                <a href="" class="logo">Tac</a>
+            </li>
+            <li class="layui-nav-item layui-this">
+                <a href="javascript:;">任务管理</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">后台任务</a></dd>
+                    <dd><a href="">计划任务</a></dd>
+                </dl>
+            </li>
+            <li style="    float: right;margin-right: 42%;">
+                <script charset="Shift_JIS" src="http://chabudai.sakura.ne.jp/blogparts/honehoneclock/honehone_clock_wh.js"></script>
+            </li>
+        </ul>
+        <ul class="layui-nav fly-nav-user">
+            <li class="layui-nav-item">
+                <a id="login">登入</a>
+            </li>
+            <li class="layui-nav-item">
+                <a id="register">注册</a>
+            </li>
+            <span class="layui-nav-bar"></span>
+        </ul>
+    </div>
+</div>
+<div class="content">
+    <div class="layui-container">
+        <div class="layui-row" style="padding-top: 8px;">
+            <div class="layui-col-md3">
+                <span class="layui-breadcrumb">
+                  <a href="/" class="fontsize">Tac</a>
+                  <a href="#" class="fontsize fontcolor" style="color: #5FB878!important;">后台任务</a>
+                </span>
+            </div>
+            <div class="layui-col-md3">&nbsp;</div>
+            <div class="layui-col-md3">&nbsp;</div>
+            <div class="layui-col-md3">
+                <button class="layui-btn" style="float: right;">新建后台任务</button>
+            </div>
+        </div>
+        <!--后台任务表格start-->
+        <div class="layui-row">
+            <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                <table class="layui-table" lay-data="{ url:'/api/v1/backendtask', page:true, id:'idTest'}" lay-filter="demo">
+                    <thead>
+                    <tr>
+                        <th lay-data="{field:'pid', sort: true, fixed: true}">PID</th>
+                        <th lay-data="{field:'taskname'}">任务名</th>
+                        <th lay-data="{field:'status'}">状态</th>
+                        <th lay-data="{field:'author'}">创建人</th>
+                        <th lay-data="{field:'hostip'}">执行环境</th>
+                        <th lay-data="{field:'addtime', sort: true}">时间</th>
+                        <th lay-data="{fixed: 'right', align:'center', toolbar: '#barDemo'}"></th>
+                    </tr>
+                    </thead>
+                </table>
+
+                <script type="text/html" id="barDemo">
+                    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看</a>
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+        <!--后台任务表格end-->
+    </div>
+</div>
+<script>
+    //注意：导航 依赖 element 模块，否则无法进行功能性操作
+    layui.use('element', function(){
+        var element = layui.element;
+
+        //…
+    });
+</script>
+<script>
+    layui.use('table', function(){
+        var table = layui.table;
+        //监听表格复选框选择
+        table.on('checkbox(demo)', function(obj){
+            console.log(obj)
+        });
+        //监听工具条
+        table.on('tool(demo)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'detail'){
+                layer.msg('ID：'+ data.id + ' 的查看操作');
+            } else if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    obj.del();
+                    layer.close(index);
+                });
+            } else if(obj.event === 'edit'){
+                layer.alert('编辑行：<br>'+ JSON.stringify(data))
+            }
+        });
+
+        var $ = layui.$, active = {
+            getCheckData: function(){ //获取选中数据
+                var checkStatus = table.checkStatus('idTest')
+                        ,data = checkStatus.data;
+                layer.alert(JSON.stringify(data));
+            }
+            ,getCheckLength: function(){ //获取选中数目
+                var checkStatus = table.checkStatus('idTest')
+                        ,data = checkStatus.data;
+                layer.msg('选中了：'+ data.length + ' 个');
+            }
+            ,isAll: function(){ //验证是否全选
+                var checkStatus = table.checkStatus('idTest');
+                layer.msg(checkStatus.isAll ? '全选': '未全选')
+            }
+        };
+
+        $('.demoTable .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+    });
+</script>
+</body>
+</html>
