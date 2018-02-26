@@ -8,10 +8,12 @@ import (
 	"io/ioutil"
 	"fmt"
 	"context"
-	//"syscall"
 	"os"
 	"time"
-	"reflect"
+	_"reflect"
+	_"reflect"
+	"strconv"
+	"strings"
 )
 
 //go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
@@ -104,29 +106,39 @@ func (r *Rect) Runcmd(params CommandParam,ret *string) error {
 	cmd.Start()
 	return nil
 }
-func ProcessIsAlive(key int,value interface{}) bool{
+func ProcessIsAlive(pid int,value interface{}) bool{
 	/*
 	判断进程是否存活
 	*/
-	cmd :=exec.Command("ls","-ll")
-	stdout ,err :=cmd.StdoutPipe()
-	if err !=nil{
-		fmt.Println(err)
+	cmd := fmt.Sprintf("ps -ef|grep %d|grep -v grep|wc -l",pid)
+	fmt.Println(cmd)
+	out ,err :=exec.Command("bash","-c",cmd).Output()
+	if err !=nil {
 		return false
 	}
-	if err :=cmd.Start();err!=nil{
-		fmt.Println(err)
+	nums,err:=strconv.Atoi(strings.Replace(string(out),"\n","",-1))
+	if err!=nil{
 		return false
 	}
-	bytes,err:=ioutil.ReadAll(stdout)
-	if err!=nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Println(bytes,string(bytes))
+	if nums==0{
+		return true
+	}else if nums>0{
 
+	}
+	fmt.Println(nums)
 	return true
 }
 
+func start(){
+	/*
+	启动函数
+	*/
+}
+func stop(){
+	/*
+	停止进程函数
+	*/
+}
 func Healthcheck(){
 	/*
 	*进程状态健康检测函数
