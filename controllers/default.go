@@ -15,8 +15,16 @@ type MainController struct {
 }
 
 func (c *MainController) Get() {
+	db,err := sql.Open("mysql",beego.AppConfig.String("mysqlurl"))
+	if err !=nil{
+		log.Fatal(err)
+	}
+	sql := fmt.Sprintf("select * from backgroundtask")
+	result,count := selectSqlData(db,sql)
 	c.Data["Website"] = "beego.me"
 	c.Data["Email"] = "astaxie@gmail.com"
+	c.Data["data"]=result
+	c.Data["count"]=count
 	c.TplName = "index.html"
 }
 /*

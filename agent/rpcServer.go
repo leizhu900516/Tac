@@ -14,6 +14,7 @@ import (
 	_"reflect"
 	"strconv"
 	"strings"
+	"golang.org/x/net/html/atom"
 )
 
 //go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
@@ -121,9 +122,9 @@ func ProcessIsAlive(pid int,value interface{}) bool{
 		return false
 	}
 	if nums==0{
-		return true
+		return false
 	}else if nums>0{
-
+		return true
 	}
 	fmt.Println(nums)
 	return true
@@ -139,6 +140,11 @@ func stop(){
 	停止进程函数
 	*/
 }
+func restart(){
+	/*
+	重启进程函数
+	*/
+}
 func Healthcheck(){
 	/*
 	*进程状态健康检测函数
@@ -148,6 +154,13 @@ func Healthcheck(){
 			fmt.Println(k,v)
 			status :=ProcessIsAlive(k,v)
 			fmt.Println(">>>>>",status)
+			if status==true{
+				//没有存活
+				start()
+			}else {
+				//存活了
+				continue
+			}
 		}
 		time.Sleep(10*time.Second)
 	}
