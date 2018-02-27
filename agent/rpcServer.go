@@ -11,10 +11,11 @@ import (
 	"os"
 	"time"
 	_"reflect"
-	_"reflect"
 	"strconv"
 	"strings"
-	"golang.org/x/net/html/atom"
+	"net/rpc"
+	"log"
+	"net/http"
 )
 
 //go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
@@ -82,17 +83,21 @@ func (r *Rect) Run(params CommandParam,ret *string) error{
 }
 
 func (r *Rect) RunBack(params CommandParam,ret *string) error {
-	ctx,_ := context.WithCancel(context.Background())
-	cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
-	//cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine:""} //linux  not compat
-	cmd.Stdout = os.Stdout
-	cmd.Start()
-	time.Sleep(1 * time.Second)
-	processid :=cmd.Process.Pid
-	processmap[processid]=params
-	fmt.Println("退出程序中...", cmd.Process.Pid)
-	//cancel()   //是否杀死进程
-	//cmd.Wait() //是否等待进程结束
+	//不能放到后台真正执行
+	go func(){
+		ctx,_ := context.WithCancel(context.Background())
+		cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
+		//cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine:""} //linux  not compat
+		cmd.Stdout = os.Stdout
+		cmd.Start()
+		time.Sleep(1 * time.Second)
+		processid :=cmd.Process.Pid
+		processmap[processid]=params
+		fmt.Println("退出程序中...", cmd.Process.Pid)
+		//cancel()   //是否杀死进程
+		//cmd.Wait() //是否等待进程结束
+	}()
+
 	return nil
 }
 
@@ -130,10 +135,19 @@ func ProcessIsAlive(pid int,value interface{}) bool{
 	return true
 }
 
-func start(){
+func start(params CommandParam) bool{
 	/*
 	启动函数
 	*/
+	ctx,_ := context.WithCancel(context.Background())
+	cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
+	//cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine:""} //linux  not compat
+	cmd.Stdout = os.Stdout
+	cmd.Start()
+	time.Sleep(1 * time.Second)
+	processid :=cmd.Process.Pid
+	processmap[processid]=params
+	return true
 }
 func stop(){
 	/*
@@ -154,9 +168,9 @@ func Healthcheck(){
 			fmt.Println(k,v)
 			status :=ProcessIsAlive(k,v)
 			fmt.Println(">>>>>",status)
-			if status==true{
+			if status==false{
 				//没有存活
-				start()
+				start(v)
 			}else {
 				//存活了
 				continue
@@ -166,17 +180,17 @@ func Healthcheck(){
 	}
 }
 func main() {
-	//rect := new(Rect);
-	////注册一个rect服务
-	//rpc.Register(rect);
-	////把服务处理绑定到http协议上
-	//rpc.HandleHTTP();
-	//log.Println("start rpc server on 8081!")
-	//go Healthcheck()
-	//err := http.ListenAndServe(":8081", nil);
-	//if err != nil {
-	//	log.Fatal(err);
-	//}
-	status :=ProcessIsAlive(12,"a")
-	fmt.Println(status)
+	rect := new(Rect);
+	//注册一个rect服务
+	rpc.Register(rect);
+	//把服务处理绑定到http协议上
+	rpc.HandleHTTP();
+	log.Println("start rpc server on 8081!")
+	go Healthcheck()
+	err := http.ListenAndServe(":8081", nil);
+	if err != nil {
+		log.Fatal(err);
+	}
+	//status :=ProcessIsAlive(12,"a")
+	//fmt.Println(status)
 }
