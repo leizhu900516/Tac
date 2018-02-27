@@ -31,8 +31,7 @@ func main() {
 	//fmt.Println(result)
 
 	var result1 string
-	err5 := rpc.Call("Rect.RunBack", Commandparam{"python",[]string{"/home/GOPATH/src/Tac/tests/sleeptest.py","&"}}, &result1);
-	if err5 != nil {
+	err5 := rpc.Call("Rect.RunBack", Commandparam{"runuser",[]string{"-l","root","-c","python sleeptest.py 2>&1 &"}}, &result1);	if err5 != nil {
 		log.Fatal(err5);
 	}
 	fmt.Println(result1)

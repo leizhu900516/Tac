@@ -16,6 +16,7 @@ import (
 	"net/rpc"
 	"log"
 	"net/http"
+	"syscall"
 )
 
 //go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
@@ -84,7 +85,6 @@ func (r *Rect) Run(params CommandParam,ret *string) error{
 
 func (r *Rect) RunBack(params CommandParam,ret *string) error {
 	//不能放到后台真正执行
-	go func(){
 		ctx,_ := context.WithCancel(context.Background())
 		cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
 		//cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine:""} //linux  not compat
@@ -96,8 +96,6 @@ func (r *Rect) RunBack(params CommandParam,ret *string) error {
 		fmt.Println("退出程序中...", cmd.Process.Pid)
 		//cancel()   //是否杀死进程
 		//cmd.Wait() //是否等待进程结束
-	}()
-
 	return nil
 }
 
@@ -142,6 +140,7 @@ func start(params CommandParam) bool{
 	ctx,_ := context.WithCancel(context.Background())
 	cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
 	//cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine:""} //linux  not compat
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmd.Stdout = os.Stdout
 	cmd.Start()
 	time.Sleep(1 * time.Second)
@@ -149,10 +148,11 @@ func start(params CommandParam) bool{
 	processmap[processid]=params
 	return true
 }
-func stop(){
+func stop(pid int){
 	/*
 	停止进程函数
 	*/
+	syscall.Kill(int(pid), syscall.SIGKILL)
 }
 func restart(){
 	/*
