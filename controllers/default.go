@@ -50,6 +50,57 @@ func (self *BackgroundtaskController) Get(){
 	self.ServeJSON()
 
 }
+
+
+
+type BackgroundtaskManageDeleteController struct{
+	beego.Controller
+}
+type BackgroundtaskManageGetController struct{
+	beego.Controller
+}
+type BackgroundtaskManagePostController struct{
+	beego.Controller
+}
+
+func (self *BackgroundtaskManageDeleteController) Delete(){
+	taskid :=self.Ctx.Input.Param("taskid")
+	fmt.Println(taskid)
+}
+func (self *BackgroundtaskManageGetController) Get(){
+	var (
+		taskname string
+		author string
+		hostip string
+	)
+
+	data:=make(map[string]interface{})
+	taskid :=self.Ctx.Input.Param("taskid")
+	db, err := sql.Open("mysql", beego.AppConfig.String("mysqluser")+":"+beego.AppConfig.String("mysqlpass")+"@tcp("+beego.AppConfig.String("mysqlurls")+":"+beego.AppConfig.String("mysqlport")+")/"+beego.AppConfig.String("mysqldb")+"?charset=utf8")
+	if err!=nil{
+		fmt.Println(err)
+	}
+	sql :=fmt.Sprintf("select taskname,author,hostip from backgroundtask where pid=%d",taskid)
+	err1 :=db.QueryRow(sql).Scan(&taskname,&author,&hostip)
+	if err1!=nil{
+		fmt.Println(err1)
+	}
+	fmt.Println(taskid)
+	detail :=make([]string,0)
+	detail=append(detail,taskname)
+	detail=append(detail,author)
+	detail=append(detail,hostip)
+	data["code"]=0
+	data["data"]=detail
+	data["msg"]="success"
+	self.Data["json"]=data
+	self.ServeJSON()
+}
+func (self *BackgroundtaskManagePostController) Post(){
+	params :=self.Ctx.Input.RequestBody
+	fmt.Println(params)
+}
+
 func selectSqlData(db *sql.DB,sql string) ([]map[string]string,int){
 	/*sql查询返回数据*/
 	result :=make([]map[string]string,0)

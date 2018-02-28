@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"syscall"
+	_"golang.org/x/sys/unix"
 )
 
 //go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
@@ -87,13 +88,11 @@ func (r *Rect) RunBack(params CommandParam,ret *string) error {
 	//不能放到后台真正执行
 		ctx,_ := context.WithCancel(context.Background())
 		cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
-		//cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine:""} //linux  not compat
 		cmd.Stdout = os.Stdout
 		cmd.Start()
-		time.Sleep(1 * time.Second)
-		processid :=cmd.Process.Pid
+		processid :=cmd.Process.Pid+3
 		processmap[processid]=params
-		fmt.Println("退出程序中...", cmd.Process.Pid)
+		fmt.Println("程序id是", processid)
 		//cancel()   //是否杀死进程
 		//cmd.Wait() //是否等待进程结束
 	return nil
@@ -133,18 +132,20 @@ func ProcessIsAlive(pid int,value interface{}) bool{
 	return true
 }
 
-func start(params CommandParam) bool{
+func start(pid int,params CommandParam) bool{
 	/*
 	启动函数
 	*/
 	ctx,_ := context.WithCancel(context.Background())
 	cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
-	//cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine:""} //linux  not compat
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}//linux  not compat
 	cmd.Stdout = os.Stdout
 	cmd.Start()
-	time.Sleep(1 * time.Second)
-	processid :=cmd.Process.Pid
+	processid :=cmd.Process.Pid+3
+	_,ok :=processmap[pid]
+	if ok{
+		delete(processmap,pid)
+	}
 	processmap[processid]=params
 	return true
 }
@@ -170,9 +171,10 @@ func Healthcheck(){
 			fmt.Println(">>>>>",status)
 			if status==false{
 				//没有存活
-				start(v)
+				start(k,v)
 			}else {
 				//存活了
+				fmt.Println("%d is running",k)
 				continue
 			}
 		}
@@ -180,6 +182,12 @@ func Healthcheck(){
 	}
 }
 func main() {
+	//err1:=unix.Chdir("/home")
+	//if err1!=nil{
+	//	fmt.Println(err1)
+	//}else{
+	//	fmt.Println("切换目录成功")
+	//}
 	rect := new(Rect);
 	//注册一个rect服务
 	rpc.Register(rect);
@@ -193,4 +201,6 @@ func main() {
 	}
 	//status :=ProcessIsAlive(12,"a")
 	//fmt.Println(status)
+
+
 }

@@ -39,3 +39,15 @@ html {
 embed{
     height: 61px;
 }
+.actions li{
+    list-style: none;
+    float: right;
+    padding-right: 12px;
+}
+.layui-bg-running{
+
+    background-color: #43d222!important;
+}
+.layui-input-custom1{
+    width: 250px!important;
+}
