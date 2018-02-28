@@ -6,6 +6,8 @@ import (
 	_"github.com/go-sql-driver/mysql"
 	"log"
 	"fmt"
+	_"reflect"
+	"strconv"
 )
 /*
 主页
@@ -75,17 +77,19 @@ func (self *BackgroundtaskManageGetController) Get(){
 	)
 
 	data:=make(map[string]interface{})
-	taskid :=self.Ctx.Input.Param("taskid")
+	taskid := self.Input().Get("taskid")
+	pid,_:=strconv.Atoi(taskid)
 	db, err := sql.Open("mysql", beego.AppConfig.String("mysqluser")+":"+beego.AppConfig.String("mysqlpass")+"@tcp("+beego.AppConfig.String("mysqlurls")+":"+beego.AppConfig.String("mysqlport")+")/"+beego.AppConfig.String("mysqldb")+"?charset=utf8")
+	defer db.Close()
 	if err!=nil{
 		fmt.Println(err)
 	}
-	sql :=fmt.Sprintf("select taskname,author,hostip from backgroundtask where pid=%d",taskid)
+
+	sql :=fmt.Sprintf("select taskname,author,hostip from backgroundtask where pid=%d",pid)
 	err1 :=db.QueryRow(sql).Scan(&taskname,&author,&hostip)
 	if err1!=nil{
 		fmt.Println(err1)
 	}
-	fmt.Println(taskid)
 	detail :=make([]string,0)
 	detail=append(detail,taskname)
 	detail=append(detail,author)

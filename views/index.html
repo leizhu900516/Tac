@@ -105,6 +105,62 @@
             </div>
         </div>
         <!--后台任务表格end-->
+        <!--弹出框-->
+        <div class="layui-layer layui-layer-page layui-layer-rim" id="layui-layer4" type="page" times="4" showtime="0" contype="string" style="z-index: 19891018;     top: 75px;width: 420px; height: 540px; left: 424px;display: none">
+            <div class="layui-layer-title" style="cursor: move;">创建后台任务</div>
+
+            <div id="" class="layui-layer-content" style="height: 497px;">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">单行输入框</label>
+                        <div class="layui-input-block layui-input-custom1">
+                            <input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">单行输入框</label>
+                        <div class="layui-input-block layui-input-custom1">
+                            <input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">单行输入框</label>
+                        <div class="layui-input-block layui-input-custom1">
+                            <input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">单行输入框</label>
+                        <div class="layui-input-block layui-input-custom1">
+                            <input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">单行输入框</label>
+                        <div class="layui-input-block layui-input-custom1">
+                            <input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                    <label class="layui-form-label">单行选择框</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <select name="interest" lay-filter="aihao">
+                            <option value=""></option>
+                            <option value="0">写作</option>
+                            <option value="1" selected="">阅读</option>
+                            <option value="2">游戏</option>
+                            <option value="3">音乐</option>
+                            <option value="4">旅行</option>
+                        </select>
+                    </div>
+                </div>
+                </form>
+            </div>
+            <span class="layui-layer-setwin">
+                <a class="layui-layer-ico layui-layer-close layui-layer-close1" href="javascript:;"></a>
+            </span>
+            <span class="layui-layer-resize"></span>
+        </div>
     </div>
 </div>
 
@@ -138,19 +194,61 @@
     layui.use('layer', function(){ //独立版的layer无需执行这一句
         var $ = layui.jquery, layer = layui.layer; //独立版的layer无需执行这一句
         $("#addbackgroundtask").on("click",function () {
-            layer.open({
-                type: 1,
-                title:"创建后台任务",
-                skin: 'layui-layer-rim', //加上边框
-                area: ['420px', '540px'], //宽高
-                content: '<div class="layui-form-item"><label class="layui-form-label">单行输入框</label><div class="layui-input-block layui-input-custom1"><input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input"></div></div>' +
-                '<div class="layui-form-item"><label class="layui-form-label">单行输入框</label><div class="layui-input-block layui-input-custom1"><input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input"></div></div>'+
-                '<div class="layui-form-item"><label class="layui-form-label">单行输入框</label><div class="layui-input-block layui-input-custom1"><input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input"></div></div>'+
-                '<div class="layui-form-item"><label class="layui-form-label">单行输入框</label><div class="layui-input-block layui-input-custom1"><input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input"></div></div>'+
-                '<div class="layui-form-item"><label class="layui-form-label">单行输入框</label><div class="layui-input-block layui-input-custom1"><input type="text" name="title" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input"></div></div>'
-
-            });
+            $("#layui-layer4").css("display","block");
         })
+
+    });
+    $(".layui-layer-close1").on("click",function () {
+        $("#layui-layer4").css("display","none");
+    })
+</script>
+<script>
+    layui.use(['form', 'layedit', 'laydate'], function(){
+        var form = layui.form
+                ,layer = layui.layer
+                ,layedit = layui.layedit
+                ,laydate = layui.laydate;
+
+        //日期
+        laydate.render({
+            elem: '#date'
+        });
+        laydate.render({
+            elem: '#date1'
+        });
+
+        //创建一个编辑器
+        var editIndex = layedit.build('LAY_demo_editor');
+
+        //自定义验证规则
+        form.verify({
+            title: function(value){
+                if(value.length < 5){
+                    return '标题至少得5个字符啊';
+                }
+            }
+            ,pass: [/(.+){6,12}$/, '密码必须6到12位']
+            ,content: function(value){
+                layedit.sync(editIndex);
+            }
+        });
+
+        //监听指定开关
+        form.on('switch(switchTest)', function(data){
+            layer.msg('开关checked：'+ (this.checked ? 'true' : 'false'), {
+                offset: '6px'
+            });
+            layer.tips('温馨提示：请注意开关状态的文字可以随意定义，而不仅仅是ON|OFF', data.othis)
+        });
+
+        //监听提交
+        form.on('submit(demo1)', function(data){
+            layer.alert(JSON.stringify(data.field), {
+                title: '最终的提交信息'
+            })
+            return false;
+        });
+
 
     });
 </script>
