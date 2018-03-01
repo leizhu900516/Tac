@@ -1,7 +1,10 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 func change(x *int){
 	*x += 1
@@ -18,4 +21,10 @@ func main() {
 	change(&x)
 	changeWithoutPointer(y)
 	fmt.Printf("x is %d, y is %d\n", x, y)
+	addtimes :=time.Now().Unix()
+	fmt.Println(addtimes)
+	t := time.Now()
+	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	tm2 := tm1.AddDate(0, 0, 1)
+	fmt.Println(tm2)
 }

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	_"reflect"
 	"strconv"
+	"encoding/json"
+	"time"
 )
 /*
 主页
@@ -22,11 +24,16 @@ func (c *MainController) Get() {
 		log.Fatal(err)
 	}
 	sql := fmt.Sprintf("select * from backgroundtask")
+	ipsql :=fmt.Sprintf("select * from taskip where status = 1")
 	result,count := selectSqlData(db,sql)
+	iplist,ipcount :=selectSqlData(db,ipsql)
+	defer db.Close()
 	c.Data["Website"] = "beego.me"
 	c.Data["Email"] = "astaxie@gmail.com"
 	c.Data["data"]=result
 	c.Data["count"]=count
+	c.Data["iplist"]=iplist
+	c.Data["ipcount"]=ipcount
 	c.TplName = "index.html"
 }
 /*
@@ -43,7 +50,6 @@ func (self *BackgroundtaskController) Get(){
 	data :=make(map[string]interface{})
 	sql := fmt.Sprintf("select * from backgroundtask")
 	result,count := selectSqlData(db,sql)
-	//fmt.Fprintln(result)
 	data["code"]=0
 	data["msg"]="true"
 	data["data"]=result
@@ -101,15 +107,35 @@ func (self *BackgroundtaskManageGetController) Get(){
 	self.ServeJSON()
 }
 func (self *BackgroundtaskManagePostController) Post(){
-	params :=self.Ctx.Input.RequestBody
-	fmt.Println(params)
+	data := make(map[string]interface{})
+	var params map[string]string
+	json.Unmarshal(self.Ctx.Input.RequestBody,&params)
+	taskname :=params["taskname"]
+	ipaddress :=params["ipaddress"]
+	url :=params["url"]
+	svnuser :=params["svnuser"]
+	svnpasswd :=params["svnpasswd"]
+	svn_number :=params["svn_number"]
+	action_cmd :=params["action_cmd"]
+	addtimes := time.Now().Unix()
+	db, err := sql.Open("mysql", beego.AppConfig.String("mysqlurl"))
+	if err != nil {
+		fmt.Println(err)
+	}
+	mysqlparam := MysqlParams{"insert into backgroundtask(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes) values(?,?,?,?,?,?,?,?)", []string{taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd},db}
+	insertid := mysqlparam.Insert(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes)
+	fmt.Println(insertid)
+	defer db.Close()
+	data["code"]=0
+	data["msg"]=""
+	data["data"]=""
+	self.Data["json"]=data
+	self.ServeJSON()
 }
 
 func selectSqlData(db *sql.DB,sql string) ([]map[string]string,int){
 	/*sql查询返回数据*/
 	result :=make([]map[string]string,0)
-	defer db.Close()
-	fmt.Println(sql)
 	rows2, err := db.Query(sql)
 	if err!=nil{
 		fmt.Println("xxxxx",err)
@@ -126,9 +152,6 @@ func selectSqlData(db *sql.DB,sql string) ([]map[string]string,int){
 		scans[k] = &vals[k]
 	}
 	i := 0
-	//result := make(map[int]map[string]string)
-
-	//is := make([]interface{}, 0)
 	for rows2.Next() {
 		//填充数据
 		rows2.Scan(scans...)
@@ -137,13 +160,11 @@ func selectSqlData(db *sql.DB,sql string) ([]map[string]string,int){
 		//把vals中的数据复制到row中
 		for k, v := range vals {
 			key := cols[k]
-			//fmt.Printf(string(v))
 			//这里把[]byte数据转成string
 			row[key] = string(v)
 		}
 		//放入结果集
 		result = append(result,row)
-		//result[i] = row
 		i++
 	}
 	fmt.Println(result)

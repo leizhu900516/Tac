@@ -48,6 +48,13 @@ embed{
 
     background-color: #43d222!important;
 }
+.layui-bg-stopping{
+    background-color: #393D49!important;
+}
 .layui-input-custom1{
     width: 250px!important;
+    margin-left: 135px!important;
+}
+.layui-form-label-custom{
+    width: 133px!important;
 }
