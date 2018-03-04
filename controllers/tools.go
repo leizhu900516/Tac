@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	_"strconv"
+	rpc2 "net/rpc"
+	"log"
 )
 /*
 *mysql操作接口
@@ -70,4 +72,23 @@ func checkErr(errs error){
 		fmt.Println(errs)
 	}
 	return
+}
+//rpc公共类部分
+type Commandparam struct {
+	Commandname string
+	Commandargs []string
+}
+func rpcclient(ip string,cmdline Commandparam){
+	/*
+	*rpc客户端连接程序
+	*/
+	rpcClient,err := rpc2.DialHTTP("tcp",ip)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var result1 string
+	err5 := rpcClient.Call("Rect.RunBack", cmdline, &result1);	if err5 != nil {
+		log.Fatal(err5)
+	}
+	fmt.Println(result1)
 }
