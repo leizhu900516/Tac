@@ -6,7 +6,9 @@ import (
 	"reflect"
 	_"strconv"
 )
-
+/*
+*mysql操作接口
+*/
 type MysqlOperate interface {
 	Select()([]map[string]string,int)
 	Insert() int64
