@@ -78,7 +78,7 @@ type Commandparam struct {
 	Commandname string
 	Commandargs []string
 }
-func rpcclient(ip string,cmdline Commandparam){
+func Rpcclient(ip string,cmdline Commandparam) string{
 	/*
 	*rpc客户端连接程序
 	*/
@@ -91,4 +91,8 @@ func rpcclient(ip string,cmdline Commandparam){
 		log.Fatal(err5)
 	}
 	fmt.Println(result1)
+	return result1
+}
+func main() {
+	result :=Rpcclient("12",Commandparam{"name",[]string{"ls"}})
 }

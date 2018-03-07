@@ -27,4 +27,7 @@ func main() {
 	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	tm2 := tm1.AddDate(0, 0, 1)
 	fmt.Println(tm2)
+	c:=32
+	d:=c >> 4
+	fmt.Println(d)
 }

@@ -106,6 +106,7 @@ func (self *BackgroundtaskManageGetController) Get(){
 	self.Data["json"]=data
 	self.ServeJSON()
 }
+
 func (self *BackgroundtaskManagePostController) Post(){
 	data := make(map[string]interface{})
 	var params map[string]string
@@ -122,6 +123,8 @@ func (self *BackgroundtaskManagePostController) Post(){
 	if err != nil {
 		fmt.Println(err)
 	}
+	pid :=Rpcclient("aaa",Commandparam{"name",[]string{"ls"}})
+	fmt.Println(pid)
 	mysqlparam := MysqlParams{"insert into backgroundtask(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes) values(?,?,?,?,?,?,?,?)", []string{taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd},db}
 	insertid := mysqlparam.Insert(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes)
 	fmt.Println(insertid)

@@ -64,6 +64,7 @@
                         </colgroup>
                         <thead>
                         <tr>
+                            <th style="display: none;">id</th>
                             <th>pid</th>
                             <th>任务名</th>
                             <th>状态</th>
@@ -76,6 +77,7 @@
                         <tbody>
                             {{ range $index,$elem :=.data}}
                                 <tr>
+                                    <td class="id" style="display: none;">{{$elem.id}}</td>
                                     <td class="taskpid">{{$elem.pid}}</td>
                                     <td class="taskname">{{$elem.taskname}}</td>
                                     <td>
@@ -110,77 +112,71 @@
         </div>
         <!--后台任务表格end-->
         <!--弹出框-->
-        <div class="layui-layer layui-layer-page layui-layer-rim" id="layui-layer4" type="page" times="4" showtime="0" contype="string"
-             style="z-index: 19891018;top: 11%;width: 420px; height: 600px; left: 40%;display: none">
-            <br>
-            <div class="layui-layer-title" style="cursor: move;">创建后台任务</div>
-            <div id="" class="layui-layer-content" style="height: 544px;">
-                <form class="layui-form layui-form-pane" action="">
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">执行环境：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <select name="ipaddress" lay-filter="aihao">
-                                {{range $index,$elem :=.iplist}}
-                                    <option value="{{$elem.ip}}">{{$elem.ip}}</option>
-                                {{end}}
-                            </select>
-                        </div>
+        <div id="tanchukuang" style="display: none">
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">执行环境：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <select name="ipaddress" lay-filter="aihao">
+                        {{range $index,$elem :=.iplist}}
+                            <option value="{{$elem.ip}}">{{$elem.ip}}</option>
+                        {{end}}
+                        </select>
                     </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">任务名称：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <input type="text" name="taskname" lay-verify="title" autocomplete="off" placeholder="请输入任务名称" class="layui-input">
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">任务名称：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <input type="text" name="taskname" lay-verify="title" autocomplete="off" placeholder="请输入任务名称" class="layui-input">
                     </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">版本库url：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <input type="text" name="url" lay-verify="title" autocomplete="off" placeholder="请输入版本库url" class="layui-input">
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">版本库url：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <input type="text" name="url" lay-verify="title" autocomplete="off" placeholder="请输入版本库url" class="layui-input">
                     </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">版本号：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <input type="text" name="svn_number" lay-verify="svn_number" autocomplete="off" placeholder="*代表最新版本" class="layui-input">
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">版本号：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <input type="text" name="svn_number" lay-verify="svn_number" autocomplete="off" placeholder="*代表最新版本" class="layui-input">
                     </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">版本库用户名：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <input type="text" name="svnuser" lay-verify="svnuser" autocomplete="off" placeholder="请输入版本库名称" class="layui-input">
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">版本库用户名：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <input type="text" name="svnuser" lay-verify="svnuser" autocomplete="off" placeholder="请输入版本库名称" class="layui-input">
                     </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">版本库密码：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <input type="text" name="svnpasswd" lay-verify="svnpasswd" autocomplete="off" placeholder="请输入版本库密码" class="layui-input">
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">版本库密码：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <input type="text" name="svnpasswd" lay-verify="svnpasswd" autocomplete="off" placeholder="请输入版本库密码" class="layui-input">
                     </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">执行命令：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <input type="text" name="action_cmd" lay-verify="action_cmd" autocomplete="off" placeholder="请输命令" class="layui-input">
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">执行命令：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <input type="text" name="action_cmd" lay-verify="action_cmd" autocomplete="off" placeholder="请输命令" class="layui-input">
                     </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label layui-form-label-custom">备注：</label>
-                        <div class="layui-input-block layui-input-custom1">
-                            <textarea placeholder="请输入内容" class="layui-textarea" rows="2" id="etc"></textarea>
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label layui-form-label-custom">备注：</label>
+                    <div class="layui-input-block layui-input-custom1">
+                        <textarea placeholder="请输入内容" class="layui-textarea" rows="2" id="etc"></textarea>
                     </div>
-                    <div class="layui-form-item">
-                        <div class="layui-input-block">
-                            <button class="layui-btn" lay-submit="" lay-filter="demo1" id="addtasksubmit">立即提交</button>
-                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
-                        </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit="" lay-filter="demo1" id="addtasksubmit">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
                     </div>
-                </form>
-            </div>
-            <span class="layui-layer-setwin">
-                <a class="layui-layer-ico layui-layer-close layui-layer-close1" href="javascript:;"></a>
-            </span>
-            <span class="layui-layer-resize"></span>
+                </div>
+            </form>
         </div>
+
+        <!--弹出框end-->
+
     </div>
 </div>
 
@@ -214,7 +210,13 @@
     layui.use('layer', function(){ //独立版的layer无需执行这一句
         var $ = layui.jquery, layer = layui.layer; //独立版的layer无需执行这一句
         $("#addbackgroundtask").on("click",function () {
-            $("#layui-layer4").css("display","block");
+            layer.open({
+                type: 1,
+                title:"新建后台任务",
+                skin: 'layui-layer-rim', //加上边框
+                area: ['420px', '600px'], //宽高
+                content: $("#tanchukuang")
+            });
         })
 
     });
