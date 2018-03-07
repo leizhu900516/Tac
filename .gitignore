@@ -96,4 +96,5 @@ ENV/
 .idea
 *.pyc
 *.exe
+*.xml
 
