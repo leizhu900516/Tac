@@ -93,6 +93,3 @@ func Rpcclient(ip string,cmdline Commandparam) string{
 	fmt.Println(result1)
 	return result1
 }
-func main() {
-	result :=Rpcclient("12",Commandparam{"name",[]string{"ls"}})
-}
