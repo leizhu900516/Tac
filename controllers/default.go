@@ -123,6 +123,7 @@ func (self *BackgroundtaskManagePostController) Post(){
 	if err != nil {
 		fmt.Println(err)
 	}
+	svncommand:="svn checkout  -r %s  %s  --username %s --password %s --no-auth-cache --non-interactive"
 	pid :=Rpcclient("aaa",Commandparam{"name",[]string{"ls"}})
 	fmt.Println(pid)
 	mysqlparam := MysqlParams{"insert into backgroundtask(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes) values(?,?,?,?,?,?,?,?)", []string{taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd},db}
