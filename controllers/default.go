@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"encoding/json"
 	"time"
+	"strings"
 )
 /*
 主页
@@ -111,23 +112,33 @@ func (self *BackgroundtaskManagePostController) Post(){
 	data := make(map[string]interface{})
 	var params map[string]string
 	json.Unmarshal(self.Ctx.Input.RequestBody,&params)
+	fmt.Println(params)
 	taskname :=params["taskname"]
 	ipaddress :=params["ipaddress"]
 	url :=params["url"]
 	svnuser :=params["svnuser"]
 	svnpasswd :=params["svnpasswd"]
 	svn_number :=params["svn_number"]
-	action_cmd :=params["action_cmd"]
+	action_cmd :=fmt.Sprintf(params["action_cmd"])
+	fmt.Println("action_cmd=",action_cmd)
 	addtimes := time.Now().Unix()
 	db, err := sql.Open("mysql", beego.AppConfig.String("mysqlurl"))
 	if err != nil {
 		fmt.Println(err)
 	}
-	svncommand:="svn checkout  -r %s  %s  --username %s --password %s --no-auth-cache --non-interactive"
-	pid :=Rpcclient("aaa",Commandparam{"name",[]string{"ls"}})
+	svnurl_split_slice :=strings.Split(url,"/")
+	svnpath:=svnurl_split_slice[len(svnurl_split_slice)-1]
+	svncommand := fmt.Sprintf("svn checkout  -r %s  %s  --username %s --password %s --no-auth-cache --non-interactive",svn_number,url,svnuser,svnpasswd)
+	fmt.Println("svncommand=",svncommand)
+	rpcparams :=Rpcparams{"root",action_cmd,"111.txt","error.log",taskname,svncommand,svnpath}
+	fmt.Println(rpcparams)
+	pid :=Rpcclient(ipaddress,rpcparams)
 	fmt.Println(pid)
 	mysqlparam := MysqlParams{"insert into backgroundtask(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes) values(?,?,?,?,?,?,?,?)", []string{taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd},db}
 	insertid := mysqlparam.Insert(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes)
+	fmt.Println("insertid=>>>",insertid)
+	err = mysqlparam.Update(fmt.Sprintf("update backgroundtask set pid=%d",insertid))
+	checkErr(err)
 	fmt.Println(insertid)
 	defer db.Close()
 	data["code"]=0

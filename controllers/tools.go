@@ -6,7 +6,7 @@ import (
 	"reflect"
 	_"strconv"
 	rpc2 "net/rpc"
-	"log"
+	_"log"
 )
 /*
 *mysql操作接口
@@ -27,6 +27,7 @@ type MysqlParams struct {
 func (mp MysqlParams) Select()([]map[string]string,int){
 	result := make([]map[string]string,0)
 	rows2 ,err :=mp.db.Query(mp.sql)
+	defer mp.db.Close()
 	if err != nil {
 		fmt.Println(err)
 		return result,0
@@ -51,9 +52,9 @@ func (mp MysqlParams) Select()([]map[string]string,int){
 	return result,i
 }
 func (mp MysqlParams) Insert(param ...interface{}) int64{
-
 	insert, err := mp.db.Prepare(mp.sql)
 	checkErr(err)
+	//defer mp.db.Close()
 	fmt.Println(reflect.TypeOf(param))
 	res,err := insert.Exec(param...)
 	checkErr(err)
@@ -63,6 +64,24 @@ func (mp MysqlParams) Insert(param ...interface{}) int64{
 	return id
 }
 
+func (mp MysqlParams) Update(sql string) error {
+	/*mysql update function*/
+	stmt,err := mp.db.Prepare(sql)
+	checkErr(err)
+	//defer mp.db.Close()
+	res,err := stmt.Exec()
+	lastId,err := res.LastInsertId()
+	if err != nil{
+		return err
+	}
+	rowCnt, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	fmt.Println(lastId,rowCnt)
+	return nil
+
+}
 
 
 
@@ -77,18 +96,47 @@ func checkErr(errs error){
 type Commandparam struct {
 	Commandname string
 	Commandargs []string
+
 }
-func Rpcclient(ip string,cmdline Commandparam) string{
+type Rpcparams struct {
+	User string
+	Commandparams string
+	Log  string
+	Error_log string
+	Path string
+	Svncheckcommand string
+	Svnpath string
+
+}
+//func Rpcclient(ip string,cmdline Commandparam) string{
+//	/*
+//	*rpc客户端连接程序
+//	*/
+//	rpcClient,err := rpc2.DialHTTP("tcp",ip)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	var result1 string
+//	err5 := rpcClient.Call("Rect.RunBack", cmdline, &result1);	if err5 != nil {
+//		log.Fatal(err5)
+//	}
+//	fmt.Println(result1)
+//	return result1
+//}
+func Rpcclient(ip string,rpcparams Rpcparams) string{
 	/*
 	*rpc客户端连接程序
 	*/
-	rpcClient,err := rpc2.DialHTTP("tcp",ip)
+	fmt.Println(rpcparams)
+	ipaddress :=ip+":8081"
+	fmt.Println("ipaddress=",ipaddress)
+	rpcClient,err := rpc2.DialHTTP("tcp",ipaddress)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	var result1 string
-	err5 := rpcClient.Call("Rect.RunBack", cmdline, &result1);	if err5 != nil {
-		log.Fatal(err5)
+	err5 := rpcClient.Call("Rect.Run", &rpcparams, &result1);if err5 != nil {
+		fmt.Println(err5)
 	}
 	fmt.Println(result1)
 	return result1

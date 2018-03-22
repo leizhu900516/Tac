@@ -5,7 +5,7 @@ import (
 	_"net/http"
 	_"log"
 	"os/exec"
-	"io/ioutil"
+	_"io/ioutil"
 	"fmt"
 	"context"
 	"os"
@@ -16,18 +16,26 @@ import (
 	"net/rpc"
 	"log"
 	"net/http"
-	"syscall"
 	_"golang.org/x/sys/unix"
 )
 
 //go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
 //go的RPC只支持GO开发的服务器与客户端之间的交互，因为采用了gob编码
-
+var cmdActionpath string
 //注意字段必须可导出
 type Params struct {
 	Width, Height int;
 }
+type Rpcparams struct {
+	User string
+	Commandparams string
+	Log  string
+	Error_log string
+	Path string
+	Svncheckcommand string
+	Svnpath string
 
+}
 type CommandParam struct {
 	Commandname string
 	Commandargs []string
@@ -37,7 +45,14 @@ type Rect struct{}
 var processmap =make(map[int]CommandParam)
 
 
-
+func init(){
+	cmdActionpath,err := exec.LookPath("bash")
+	if err != nil{
+		fmt.Println("not find bash.")
+		os.Exit(5)
+	}
+	fmt.Println(cmdActionpath)
+}
 //函数必须是导出的
 //必须有两个导出类型参数
 //第一个参数是接收参数
@@ -55,37 +70,58 @@ func (r *Rect) Perimeter(p Params, ret *int) error {
 /*
 *执行cmd命令的函数Run
 */
-func (r *Rect) Run(params CommandParam,ret *string) error{
-	fmt.Println(params)
-	go func(){
-		cmd :=exec.Command(params.Commandname,params.Commandargs...)
-		//fmt.Println(cmd.Process.Pid)
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-
-			*ret =err.Error()
-		}else {
-			// 运行命令
-			if err := cmd.Start(); err != nil {
-				*ret =err.Error()
-			}else {
-				// 读取输出结果
-				opBytes, err := ioutil.ReadAll(stdout)
-				if err != nil {
-					*ret =err.Error()
-				}else {
-					*ret =string(opBytes)
-				}
-			}
+func (r *Rect) Run (rpcparams Rpcparams,ret *string) error {
+	if rpcparams.Commandparams==""{
+		fmt.Println("xxxxxx")
+		return nil
+	}
+	//mkdir
+	taskpath :="/data/"+rpcparams.Path
+	fmt.Println(taskpath)
+	_,err := os.Stat(taskpath)
+	if os.IsNotExist(err){
+		err :=Mkdir(taskpath)
+		if err!=nil{
+			fmt.Println(err)
+			return err
 		}
-		// 保证关闭输出流
-		defer stdout.Close()
-	}()
+	}
+	fmt.Println("11112")
+	//svn代码拉取Comm
+	cmd:=exec.Command(cmdActionpath,"-c",rpcparams.Svncheckcommand)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	s:=string(out)
+	fmt.Println("222",s)
+
+	//执行任务
+	err =os.Chdir(taskpath+"/"+rpcparams.Svnpath)
+	if err != nil {
+		return err
+	}
+	var cmdString string
+	if rpcparams.User != "" && rpcparams.User != "root"{
+		cmdString = fmt.Sprintf(cmdActionpath, "-c", "su %s -c '%s %s >> %s 2>>%s &'", rpcparams.User, cmdActionpath, rpcparams.Commandparams, rpcparams.Log, rpcparams.Error_log)
+
+	}else{
+		cmdString = fmt.Sprintf("setsid  %s >> %s 2>>%s &", rpcparams.Commandparams, rpcparams.Log, rpcparams.Error_log)
+	}
+	cmd = exec.Command(cmdActionpath,"-c",cmdString)
+	_,err = cmd.CombinedOutput()
+	if err !=nil{
+		return err
+	}
 	return nil
 }
 
-func (r *Rect) RunBack(params CommandParam,ret *string) error {
+func (r *Rect) RunBack(params CommandParam,ret *string,path string) error {
 	//不能放到后台真正执行
+		err :=Mkdir(path)
+		if err!=nil{
+			return err
+		}
 		ctx,_ := context.WithCancel(context.Background())
 		cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
 		cmd.Stdout = os.Stdout
@@ -98,15 +134,13 @@ func (r *Rect) RunBack(params CommandParam,ret *string) error {
 	return nil
 }
 
-func (r *Rect) Runcmd(params CommandParam,ret *string) error {
-	cmd :=exec.Command(params.Commandname,params.Commandargs...)
-	//将其他命令传入生成出的进程
-	//给新进程设置文件描述符，可以重定向到文件中
-	cmd.Stdin=os.Stdin
-	cmd.Stdout=os.Stdout
-	cmd.Stderr=os.Stderr
-	//开始执行新进程，不等待新进程退出
-	cmd.Start()
+func Mkdir(path string)error{
+	cmdString :=fmt.Sprintf(`mkdir -p %s >/dev/null 2>&1`,path)
+	cmd := exec.Command(cmdActionpath,"-c",cmdString)
+	_,err :=cmd.CombinedOutput()
+	if err !=nil{
+		return err
+	}
 	return nil
 }
 func ProcessIsAlive(pid int,value interface{}) bool{
@@ -149,11 +183,17 @@ func start(pid int,params CommandParam) bool{
 	processmap[processid]=params
 	return true
 }
-func stop(pid int){
+func stop(pid int) error{
 	/*
 	停止进程函数
 	*/
-	syscall.Kill(int(pid), syscall.SIGKILL)
+	cmdString := fmt.Sprintf("kill %s",strconv.Itoa(pid))
+	cmd := exec.Command(cmdActionpath,"-c",cmdString)
+	_,err := cmd.CombinedOutput()
+	if err != nil{
+		return err
+	}
+	return nil
 }
 func restart(){
 	/*
