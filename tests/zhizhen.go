@@ -52,47 +52,44 @@ func init(){
 	}
 	fmt.Println(cmdActionpath)
 }
-func Mkdir(path string)error{
-	cmdString :=fmt.Sprintf(`mkdir -p %s >/dev/null 2>&1`,path)
-	cmd := exec.Command(cmdActionpath,"-c",cmdString)
-	_,err :=cmd.CombinedOutput()
-	if err !=nil{
-		fmt.Println("334354545",err)
-		return err
-	}
-	return nil
-}
-
 func  Run (rpcparams Rpcparams) error {
 	if rpcparams.Commandparams==""{
 		fmt.Println("xxxxxx")
 		return nil
 	}
 	//mkdir
-	taskpath :="/data/"+rpcparams.Path+"/"+rpcparams.Svnpath
+	taskpath :="/data/"+rpcparams.Path
 	fmt.Println(taskpath)
 	_,err := os.Stat(taskpath)
 	fmt.Println("......",err)
 	if os.IsNotExist(err){
 		fmt.Println("vvvv")
-		err :=Mkdir(taskpath)
+		err :=os.MkdirAll(taskpath,0777)
 		if err!=nil{
 			fmt.Println(err)
 			return err
+		}else {
+			fmt.Println("create dir success")
 		}
 	}
 	fmt.Println("11112")
 	//svn代码拉取Comm
+	err =os.Chdir(taskpath)
+	if err != nil {
+		return err
+	}
+	fmt.Println("cmdActionpath=",cmdActionpath)
 	cmd:=exec.Command(cmdActionpath,"-c",rpcparams.Svncheckcommand)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		fmt.Println("eee",err)
 		return err
 	}
 	s:=string(out)
 	fmt.Println("222",s)
 
 	//执行任务
-	err =os.Chdir(taskpath)
+	err =os.Chdir(taskpath+"/"+rpcparams.Svnpath)
 	if err != nil {
 		return err
 	}
@@ -133,14 +130,14 @@ func main() {
 		fmt.Println(err.Error())
 	}
 	//a:=[]string{"svn","checkout","http://172.16.56.11/svn/archnews/Mainline/NewsPlatform","--username","chenhuachao","--password","6694d7602e48!@$%","--no-auth-cache","--non-interactive"}
-	svncommand:=fmt.Sprintf("svn checkout  %s  --username %s --password '%s' --no-auth-cache --non-interactive","http://172.16.56.11/svn/archnews/Mainline/NewsPlatform","chenhuachao","6694d7602e48!@$%")
-	cmd:=exec.Command(cmdwithpath,"-c",svncommand)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	s:=string(out)
-	fmt.Println(s)
+	//svncommand:=fmt.Sprintf("svn checkout  %s  --username %s --password '%s' --no-auth-cache --non-interactive","http://172.16.56.11/svn/archnews/Mainline/NewsPlatform","chenhuachao","6694d7602e48!@$%")
+	//cmd:=exec.Command(cmdwithpath,"-c",svncommand)
+	//out, err := cmd.CombinedOutput()
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//}
+	//s:=string(out)
+	//fmt.Println(s)
 	fmt.Println(os.Getwd())
 	var aaa Rpcparams
 	aaa =Rpcparams{"root","python test002.py","111.txt","error.log","chenhuachao","svn checkout  -r *  http://172.16.56.11/svn/archnews/Mainline/NewsPlatform/test  --username chenhuachao --password 6694d7602e48!@$% --no-auth-cache --non-interactive","test"}
