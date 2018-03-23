@@ -183,7 +183,7 @@
 
 <script>
     //注意：导航 依赖 element 模块，否则无法进行功能性操作
-    layui.use('element','layer', function(){
+    layui.use(['element','layer'], function(){
         var element = layui.element;
         var $ = layui.jquery, layer = layui.layer;
 
@@ -207,10 +207,14 @@
 
 </script>
 <script>
-    layui.use('layer', function(){ //独立版的layer无需执行这一句
-        var $ = layui.jquery, layer = layui.layer; //独立版的layer无需执行这一句
+    layui.use(['form', 'layedit', 'laydate','layer'], function(){
+        var form = layui.form
+                ,layer = layui.layer
+                ,layedit = layui.layedit
+                ,laydate = layui.laydate
+                ,$ = layui.jquery;
         $("#addbackgroundtask").on("click",function () {
-            layer.open({
+            var addlayer = layer.open({
                 type: 1,
                 title:"新建后台任务",
                 skin: 'layui-layer-rim', //加上边框
@@ -218,19 +222,6 @@
                 content: $("#tanchukuang")
             });
         })
-
-    });
-    $(".layui-layer-close1").on("click",function () {
-        $("#layui-layer4").css("display","none");
-    })
-</script>
-<script>
-    layui.use(['form', 'layedit', 'laydate'], function(){
-        var form = layui.form
-                ,layer = layui.layer
-                ,layedit = layui.layedit
-                ,laydate = layui.laydate;
-
         //日期
         laydate.render({
             elem: '#date'
@@ -267,8 +258,12 @@
                 success:function (result) {
                     console.log(result)
                     if(result.code==0){
-                        layer.alert("chenggong");
-                        $("#layui-layer4").css("display","none");
+                        layer.open({
+                            title: '新建成功'
+                            ,content: '后台任务新建成功！'
+                            ,time:2000
+                        });
+                        layer.close(addlayer)
                     }
                 }
             });

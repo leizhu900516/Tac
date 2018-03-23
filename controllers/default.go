@@ -107,7 +107,7 @@ func (self *BackgroundtaskManageGetController) Get(){
 	self.Data["json"]=data
 	self.ServeJSON()
 }
-
+/*添加后台任务*/
 func (self *BackgroundtaskManagePostController) Post(){
 	data := make(map[string]interface{})
 	var params map[string]string
@@ -119,7 +119,7 @@ func (self *BackgroundtaskManagePostController) Post(){
 	svnuser :=params["svnuser"]
 	svnpasswd :=params["svnpasswd"]
 	svn_number :=params["svn_number"]
-	action_cmd :=fmt.Sprintf(params["action_cmd"])
+	action_cmd :=params["action_cmd"]
 	fmt.Println("action_cmd=",action_cmd)
 	addtimes := time.Now().Unix()
 	db, err := sql.Open("mysql", beego.AppConfig.String("mysqlurl"))
@@ -128,16 +128,18 @@ func (self *BackgroundtaskManagePostController) Post(){
 	}
 	svnurl_split_slice :=strings.Split(url,"/")
 	svnpath:=svnurl_split_slice[len(svnurl_split_slice)-1]
-	svncommand := fmt.Sprintf("svn checkout  -r %s  %s  --username %s --password %s --no-auth-cache --non-interactive",svn_number,url,svnuser,svnpasswd)
-	fmt.Println("svncommand=",svncommand)
+	var svncommand string
+	if svn_number == "*"{
+		svncommand = fmt.Sprintf("svn checkout  %s  --username %s --password %s --no-auth-cache --non-interactive",url,svnuser,svnpasswd)
+	}else{
+		svncommand = fmt.Sprintf("svn checkout  -r %s  %s  --username %s --password %s --no-auth-cache --non-interactive",svn_number,url,svnuser,svnpasswd)
+	}
 	rpcparams :=Rpcparams{"root",action_cmd,"111.txt","error.log",taskname,svncommand,svnpath}
-	fmt.Println(rpcparams)
 	pid :=Rpcclient(ipaddress,rpcparams)
-	fmt.Println(pid)
+	fmt.Println(">>>>>pid=",pid)
 	mysqlparam := MysqlParams{"insert into backgroundtask(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes) values(?,?,?,?,?,?,?,?)", []string{taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd},db}
 	insertid := mysqlparam.Insert(taskname,ipaddress,url,svnuser,svnpasswd,svn_number,action_cmd,addtimes)
-	fmt.Println("insertid=>>>",insertid)
-	err = mysqlparam.Update(fmt.Sprintf("update backgroundtask set pid=%d",insertid))
+	err = mysqlparam.Update(fmt.Sprintf("update backgroundtask set pid=%s,status=1 where id=%d",pid,insertid))
 	checkErr(err)
 	fmt.Println(insertid)
 	defer db.Close()

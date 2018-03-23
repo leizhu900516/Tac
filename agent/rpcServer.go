@@ -22,6 +22,7 @@ import (
 //go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
 //go的RPC只支持GO开发的服务器与客户端之间的交互，因为采用了gob编码
 var cmdActionpath string
+var err error
 //注意字段必须可导出
 type Params struct {
 	Width, Height int;
@@ -46,7 +47,7 @@ var processmap =make(map[int]CommandParam)
 
 
 func init(){
-	cmdActionpath,err := exec.LookPath("bash")
+	cmdActionpath,err = exec.LookPath("bash")
 	if err != nil{
 		fmt.Println("not find bash.")
 		os.Exit(5)
@@ -73,55 +74,79 @@ func (r *Rect) Perimeter(p Params, ret *int) error {
 func (r *Rect) Run (rpcparams Rpcparams,ret *string) error {
 	if rpcparams.Commandparams==""{
 		fmt.Println("xxxxxx")
+		*ret="-1"
 		return nil
 	}
 	//mkdir
 	taskpath :="/data/"+rpcparams.Path
-	fmt.Println(taskpath)
+	fmt.Println("taskpath=",taskpath)
 	_,err := os.Stat(taskpath)
+	fmt.Println("......",err)
 	if os.IsNotExist(err){
-		err :=Mkdir(taskpath)
+		fmt.Println("vvvv")
+		err :=os.MkdirAll(taskpath,0777)
 		if err!=nil{
 			fmt.Println(err)
+			*ret="-1"
 			return err
+		}else {
+			fmt.Println("create dir success")
 		}
+	}else{
+		fmt.Println("dir exits")
 	}
 	fmt.Println("11112")
 	//svn代码拉取Comm
+	err =os.Chdir(taskpath)
+	if err != nil {
+		*ret="-1"
+		return err
+	}
 	cmd:=exec.Command(cmdActionpath,"-c",rpcparams.Svncheckcommand)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		fmt.Println("eee",err)
+		*ret="-1"
 		return err
 	}
 	s:=string(out)
-	fmt.Println("222",s)
-
+	fmt.Println(s)
 	//执行任务
 	err =os.Chdir(taskpath+"/"+rpcparams.Svnpath)
 	if err != nil {
+		local_dir,_:=os.Getwd()
+		fmt.Println("当前文件目录=",local_dir)
+		*ret="-1"
 		return err
 	}
 	var cmdString string
+	var programlist []string
+	programlist = strings.Split(rpcparams.Commandparams," ")
+	progranname := programlist[len(programlist)-1]
 	if rpcparams.User != "" && rpcparams.User != "root"{
 		cmdString = fmt.Sprintf(cmdActionpath, "-c", "su %s -c '%s %s >> %s 2>>%s &'", rpcparams.User, cmdActionpath, rpcparams.Commandparams, rpcparams.Log, rpcparams.Error_log)
 
 	}else{
 		cmdString = fmt.Sprintf("setsid  %s >> %s 2>>%s &", rpcparams.Commandparams, rpcparams.Log, rpcparams.Error_log)
 	}
+	fmt.Println("cmdString=",cmdString)
 	cmd = exec.Command(cmdActionpath,"-c",cmdString)
 	_,err = cmd.CombinedOutput()
 	if err !=nil{
+		*ret="-1"
 		return err
 	}
+	pid,err := getProgramId(progranname)
+	if err != nil{
+		*ret="-1"
+		return err
+	}
+	*ret=pid
 	return nil
 }
 
 func (r *Rect) RunBack(params CommandParam,ret *string,path string) error {
 	//不能放到后台真正执行
-		err :=Mkdir(path)
-		if err!=nil{
-			return err
-		}
 		ctx,_ := context.WithCancel(context.Background())
 		cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
 		cmd.Stdout = os.Stdout
@@ -133,15 +158,16 @@ func (r *Rect) RunBack(params CommandParam,ret *string,path string) error {
 		//cmd.Wait() //是否等待进程结束
 	return nil
 }
-
-func Mkdir(path string)error{
-	cmdString :=fmt.Sprintf(`mkdir -p %s >/dev/null 2>&1`,path)
-	cmd := exec.Command(cmdActionpath,"-c",cmdString)
-	_,err :=cmd.CombinedOutput()
-	if err !=nil{
-		return err
+func getProgramId(programname string) (string,error){
+	//获取程序pid
+	cmdstring :=fmt.Sprintf("ps -ef|grep %s|grep -v grep|awk '{print $2}'",programname)
+	cmd := exec.Command(cmdActionpath,"-c",cmdstring)
+	out,err :=cmd.CombinedOutput()
+	if err!=nil{
+		return "-1",err
 	}
-	return nil
+	pid :=strings.Replace(string(out),"\n","",-1)
+	return pid,nil
 }
 func ProcessIsAlive(pid int,value interface{}) bool{
 	/*

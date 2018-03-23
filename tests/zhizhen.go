@@ -7,6 +7,9 @@ import (
 	"os"
 	"os/exec"
 	_"strings"
+	"math/rand"
+	"strconv"
+	"strings"
 )
 
 func change(x *int){
@@ -31,26 +34,35 @@ type Rpcparams struct {
 	Svnpath string
 
 }
-var cmdwithpath string
-var err error
-func init() {
-	cmdwithpath, err = exec.LookPath("bash")
-	if err != nil {
-		fmt.Println("not find bash.")
-		os.Exit(5)
-	}
-}
+
+
 func test(rpc Rpcparams){
 	fmt.Println(rpc)
 }
+var err error
 var cmdActionpath string
 func init(){
-	cmdActionpath,err := exec.LookPath("bash")
+	cmdActionpath,err = exec.LookPath("bash")
 	if err != nil{
 		fmt.Println("not find bash.")
 		os.Exit(5)
 	}
-	fmt.Println(cmdActionpath)
+	fmt.Println("cmdActionpath=xxx",cmdActionpath)
+}
+func getProgramId(programname string) (int,error){
+	//获取程序pid
+	cmdstring :=fmt.Sprintf("ps -ef|grep %s|grep -v grep|awk '{print $2}'",programname)
+	cmd := exec.Command(cmdActionpath,"-c",cmdstring)
+	out,err :=cmd.CombinedOutput()
+	if err!=nil{
+		return 0,err
+	}
+	s :=strings.Replace(string(out),"\n","",-1)
+	pid,err :=strconv.Atoi(s)
+	if err!=nil {
+		return 0,err
+	}
+	return pid,nil
 }
 func  Run (rpcparams Rpcparams) error {
 	if rpcparams.Commandparams==""{
@@ -59,7 +71,7 @@ func  Run (rpcparams Rpcparams) error {
 	}
 	//mkdir
 	taskpath :="/data/"+rpcparams.Path
-	fmt.Println(taskpath)
+	fmt.Println("taskpath=",taskpath)
 	_,err := os.Stat(taskpath)
 	fmt.Println("......",err)
 	if os.IsNotExist(err){
@@ -71,6 +83,8 @@ func  Run (rpcparams Rpcparams) error {
 		}else {
 			fmt.Println("create dir success")
 		}
+	}else{
+		fmt.Println("dir exits")
 	}
 	fmt.Println("11112")
 	//svn代码拉取Comm
@@ -78,7 +92,7 @@ func  Run (rpcparams Rpcparams) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("cmdActionpath=",cmdActionpath)
+	fmt.Println("Svncheckcommand=",rpcparams.Svncheckcommand)
 	cmd:=exec.Command(cmdActionpath,"-c",rpcparams.Svncheckcommand)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -91,6 +105,8 @@ func  Run (rpcparams Rpcparams) error {
 	//执行任务
 	err =os.Chdir(taskpath+"/"+rpcparams.Svnpath)
 	if err != nil {
+		local_dir,_:=os.Getwd()
+		fmt.Println("当前文件目录=",local_dir)
 		return err
 	}
 	var cmdString string
@@ -108,40 +124,43 @@ func  Run (rpcparams Rpcparams) error {
 	return nil
 }
 func main() {
-	x := 1
-	y := 1
-	change(&x)
-	changeWithoutPointer(y)
-	fmt.Printf("x is %d, y is %d\n", x, y)
+	rnd :=rand.New(rand.NewSource(time.Now().UnixNano()))
+	vcode := fmt.Sprintf("%06v",rnd.Int31n(1000000))
+	fmt.Println(vcode)
 	addtimes :=time.Now().Unix()
 	fmt.Println(addtimes)
 	t := time.Now()
 	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	tm2 := tm1.AddDate(0, 0, 1)
 	fmt.Println(tm2)
-	c:=32
-	d:=c >> 4
-	fmt.Println(d)
-	dir,_:=os.Getwd()
-	fmt.Println(dir)
-	err:=os.Chdir("/home")
-	if err !=nil{
-		fmt.Println("xxx")
-		fmt.Println(err.Error())
-	}
-	//a:=[]string{"svn","checkout","http://172.16.56.11/svn/archnews/Mainline/NewsPlatform","--username","chenhuachao","--password","6694d7602e48!@$%","--no-auth-cache","--non-interactive"}
+	//dir,_:=os.Getwd()
+	//fmt.Println(dir)
+	//err:=os.Chdir("/home")
+	//if err !=nil{
+	//	fmt.Println("xxx")
+	//	fmt.Println(err.Error())
+	//}
+	//fmt.Println(cmdActionpath)
 	//svncommand:=fmt.Sprintf("svn checkout  %s  --username %s --password '%s' --no-auth-cache --non-interactive","http://172.16.56.11/svn/archnews/Mainline/NewsPlatform","chenhuachao","6694d7602e48!@$%")
-	//cmd:=exec.Command(cmdwithpath,"-c",svncommand)
+	//cmd:=exec.Command(cmdActionpath,"-c",svncommand)
 	//out, err := cmd.CombinedOutput()
 	//if err != nil {
 	//	fmt.Println(err.Error())
 	//}
 	//s:=string(out)
 	//fmt.Println(s)
-	fmt.Println(os.Getwd())
-	var aaa Rpcparams
-	aaa =Rpcparams{"root","python test002.py","111.txt","error.log","chenhuachao","svn checkout  -r *  http://172.16.56.11/svn/archnews/Mainline/NewsPlatform/test  --username chenhuachao --password 6694d7602e48!@$% --no-auth-cache --non-interactive","test"}
-
-	err=Run(aaa)
-	fmt.Println(err)
+	//fmt.Println(os.Getwd())
+	//var aaa Rpcparams
+	//aaa =Rpcparams{"root","python test002.py","111.txt","error.log","pythontest","svn checkout  http://172.16.56.11/svn/archnews/Mainline/NewsPlatform/test  --username chenhuachao --password 6694d7602e48!@$% --no-auth-cache --non-interactive","test"}
+	//
+	//err=Run(aaa)
+	//fmt.Println(err)
+	pid,err :=getProgramId("test002.py")
+	if err != nil{
+		fmt.Println(err)
+	}
+	fmt.Println("pid=",pid)
+	var programname []string
+	programname = strings.Split("python test002.py"," ")
+	fmt.Println(programname[len(programname)-1])
 }
