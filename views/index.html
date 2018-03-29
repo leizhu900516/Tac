@@ -94,9 +94,9 @@
                                         <ul class="actions">
                                             <li><button class="layui-btn layui-btn-danger layui-btn-xs" id="taskdelete">删除</button></li>
                                             <li><button class="layui-btn layui-btn-danger layui-btn-xs" id="taskrestart">重启</button></li>
-                                            <li><button class="layui-btn layui-btn-danger layui-btn-xs" id="taskstop">停止</button></li>
+                                            <li><button id="taskstop" {{ if eq "0" $elem.status}}class="layui-btn layui-btn-danger layui-btn-xs layui-btn-disabled" {{else}} class="layui-btn layui-btn-danger layui-btn-xs" {{end}}>停止</button></li>
                                             <li><button class="layui-btn layui-btn-warm layui-btn-xs" id="taskview">查看</button></li>
-                                            <li><button class="layui-btn layui-btn-xs" id="taskstart">启动</button></li>
+                                            <li><button id="taskstart" {{ if eq "1" $elem.status}}class="layui-btn layui-btn-xs layui-btn-disabled" {{else}}class="layui-btn layui-btn-xs" {{end}}>启动</button></li>
                                         </ul>
                                     </td>
                                 </tr>
@@ -214,7 +214,7 @@
                 ,laydate = layui.laydate
                 ,$ = layui.jquery;
         $("#addbackgroundtask").on("click",function () {
-            var addlayer = layer.open({
+            addlayer = layer.open({
                 type: 1,
                 title:"新建后台任务",
                 skin: 'layui-layer-rim', //加上边框

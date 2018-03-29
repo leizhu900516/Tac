@@ -1,5 +1,8 @@
 package main;
-
+/*
+@author:chenhuachao
+@time: 2018-02-09
+*/
 import (
 	_"net/rpc"
 	_"net/http"
@@ -7,7 +10,6 @@ import (
 	"os/exec"
 	_"io/ioutil"
 	"fmt"
-	"context"
 	"os"
 	"time"
 	_"reflect"
@@ -37,13 +39,10 @@ type Rpcparams struct {
 	Svnpath string
 
 }
-type CommandParam struct {
-	Commandname string
-	Commandargs []string
-}
+
 type Rect struct{}
 //进程map缓存：{pid:"pname"}
-var processmap =make(map[int]CommandParam)
+var processmap =make(map[string]Rpcparams)
 
 
 func init(){
@@ -59,10 +58,6 @@ func init(){
 //第一个参数是接收参数
 //第二个参数是返回给客户端参数，必须是指针类型
 //函数还要有一个返回值error
-func (r *Rect) Area(p Params, ret *int) error {
-	*ret = p.Width * p.Height;
-	return nil;
-}
 
 func (r *Rect) Perimeter(p Params, ret *int) error {
 	*ret = (p.Width + p.Height) * 2;
@@ -142,9 +137,10 @@ func (r *Rect) Run (rpcparams Rpcparams,ret *string) error {
 		return err
 	}
 	*ret=pid
+	processmap[pid]=rpcparams
 	return nil
 }
-
+/*
 func (r *Rect) RunBack(params CommandParam,ret *string,path string) error {
 	//不能放到后台真正执行
 		ctx,_ := context.WithCancel(context.Background())
@@ -158,6 +154,7 @@ func (r *Rect) RunBack(params CommandParam,ret *string,path string) error {
 		//cmd.Wait() //是否等待进程结束
 	return nil
 }
+*/
 func getProgramId(programname string) (string,error){
 	//获取程序pid
 	cmdstring :=fmt.Sprintf("ps -ef|grep %s|grep -v grep|awk '{print $2}'",programname)
@@ -169,11 +166,15 @@ func getProgramId(programname string) (string,error){
 	pid :=strings.Replace(string(out),"\n","",-1)
 	return pid,nil
 }
-func ProcessIsAlive(pid int,value interface{}) bool{
+func ProcessIsAlive(pid string,value interface{}) bool{
 	/*
 	判断进程是否存活
 	*/
-	cmd := fmt.Sprintf("ps -ef|grep %d|grep -v grep|wc -l",pid)
+	procid,err:=strconv.Atoi(pid)
+	if err!=nil{
+		fmt.Println(err)
+	}
+	cmd := fmt.Sprintf("ps -ef|grep %d|grep -v grep|wc -l",procid)
 	fmt.Println(cmd)
 	out ,err :=exec.Command("bash","-c",cmd).Output()
 	if err !=nil {
@@ -192,21 +193,40 @@ func ProcessIsAlive(pid int,value interface{}) bool{
 	return true
 }
 
-func start(pid int,params CommandParam) bool{
+func start(pid string,rpcparams Rpcparams) bool{
 	/*
 	启动函数
 	*/
-	ctx,_ := context.WithCancel(context.Background())
-	cmd :=exec.CommandContext(ctx,params.Commandname,params.Commandargs...)
-	//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}//linux  not compat
-	cmd.Stdout = os.Stdout
-	cmd.Start()
-	processid :=cmd.Process.Pid+3
-	_,ok :=processmap[pid]
-	if ok{
-		delete(processmap,pid)
+	taskpath :="/data/"+rpcparams.Path
+	err =os.Chdir(taskpath+"/"+rpcparams.Svnpath)
+	if err != nil {
+		local_dir,_:=os.Getwd()
+		fmt.Println("当前文件目录=",local_dir)
 	}
-	processmap[processid]=params
+	programlist := strings.Split(rpcparams.Commandparams," ")
+	progranname := programlist[len(programlist)-1]
+	var cmdString string
+	if rpcparams.User != "" && rpcparams.User != "root"{
+		cmdString = fmt.Sprintf(cmdActionpath, "-c", "su %s -c '%s %s >> %s 2>>%s &'", rpcparams.User, cmdActionpath, rpcparams.Commandparams, rpcparams.Log, rpcparams.Error_log)
+
+	}else{
+		cmdString = fmt.Sprintf("setsid  %s >> %s 2>>%s &", rpcparams.Commandparams, rpcparams.Log, rpcparams.Error_log)
+	}
+	fmt.Println("cmdString=",cmdString)
+	cmd := exec.Command(cmdActionpath,"-c",cmdString)
+	out,err := cmd.CombinedOutput()
+	if err !=nil{
+		fmt.Println(err)
+	}
+	newpid,err := getProgramId(progranname)
+	if err != nil{
+		fmt.Println(err)
+	}
+	delete(processmap,pid)
+	processmap[newpid]=rpcparams
+	s:=string(out)
+	fmt.Println(s)
+	//更新数据库的状态和pid
 	return true
 }
 func stop(pid int) error{
@@ -231,6 +251,7 @@ func Healthcheck(){
 	*进程状态健康检测函数
 	*/
 	for{
+		fmt.Println("healthchecking...")
 		for k,v :=range processmap{
 			fmt.Println(k,v)
 			status :=ProcessIsAlive(k,v)
