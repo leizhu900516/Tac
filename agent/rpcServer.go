@@ -2,6 +2,7 @@ package main;
 /*
 @author:chenhuachao
 @time: 2018-02-09
+@ 计划任务的agent-server,配置文件在/parserconfig/config中
 */
 import (
 	_"net/rpc"
@@ -19,12 +20,21 @@ import (
 	"log"
 	"net/http"
 	_"golang.org/x/sys/unix"
+	conf "./parserconfig"
+	tools "./functools"
+	"database/sql"
+	_"github.com/go-sql-driver/mysql"
 )
 
-//go对RPC的支持，支持三个级别：TCP、HTTP、JSONRPC
-//go的RPC只支持GO开发的服务器与客户端之间的交互，因为采用了gob编码
-var cmdActionpath string
-var err error
+
+var (
+	cmdActionpath string
+	err error
+	AgentConfig conf.Config
+	db   *sql.DB
+)
+
+
 //注意字段必须可导出
 type Params struct {
 	Width, Height int;
@@ -51,8 +61,31 @@ func init(){
 		fmt.Println("not find bash.")
 		os.Exit(5)
 	}
-	fmt.Println(cmdActionpath)
+	AgentConfig.InitConfig("./parserconfig/config")
+	db,err =sql.Open("mysql",AgentConfig.Read("mysqlurl"))
+	if err!=nil{
+		fmt.Println(">>>>",err)
+	}
+	localhostIp:=tools.GetHostIp()
+	sql:=fmt.Sprintf("select * from backgroundtask where ipaddress='%s'",localhostIp)
+	result :=tools.Select(db,sql)
+	fmt.Println(result)
+	if len(result)>0{
+		for _,values :=range result{
+			fmt.Println(">>>>>>>>>>",values)
+			pid:=values["pid"]
+			taskname:=values["taskname"]
+			url:=values["url"]
+			svnurl_split_slice :=strings.Split(url,"/")
+			svnpath:=svnurl_split_slice[len(svnurl_split_slice)-1]
+			action_cmd:=values["action_cmd"]
+			rpcparams:=Rpcparams{"root",action_cmd,"","",taskname,"",svnpath}
+			fmt.Println(rpcparams)
+			processmap[pid]=rpcparams
+		}
+	}
 }
+
 //函数必须是导出的
 //必须有两个导出类型参数
 //第一个参数是接收参数
@@ -202,6 +235,7 @@ func start(pid string,rpcparams Rpcparams) bool{
 	if err != nil {
 		local_dir,_:=os.Getwd()
 		fmt.Println("当前文件目录=",local_dir)
+		return false
 	}
 	programlist := strings.Split(rpcparams.Commandparams," ")
 	progranname := programlist[len(programlist)-1]
@@ -217,10 +251,12 @@ func start(pid string,rpcparams Rpcparams) bool{
 	out,err := cmd.CombinedOutput()
 	if err !=nil{
 		fmt.Println(err)
+		return false
 	}
 	newpid,err := getProgramId(progranname)
 	if err != nil{
 		fmt.Println(err)
+		return false
 	}
 	delete(processmap,pid)
 	processmap[newpid]=rpcparams
@@ -249,6 +285,7 @@ func restart(){
 func Healthcheck(){
 	/*
 	*进程状态健康检测函数
+	*每十秒检测一次
 	*/
 	for{
 		fmt.Println("healthchecking...")
@@ -257,10 +294,17 @@ func Healthcheck(){
 			status :=ProcessIsAlive(k,v)
 			fmt.Println(">>>>>",status)
 			if status==false{
-				//没有存活
-				start(k,v)
+				//死亡了。。。
+				var flag=0
+				sql:=fmt.Sprintf("update backgroundtask set status=%d where pid=%s",flag,k)
+				tools.Update(db,sql)
+				status:=start(k,v)
+				if status==true{
+					flag =1
+					tools.Update(db,sql)
+				}
 			}else {
-				//存活了
+				//存活中。。。
 				fmt.Println("%d is running",k)
 				continue
 			}
@@ -269,12 +313,6 @@ func Healthcheck(){
 	}
 }
 func main() {
-	//err1:=unix.Chdir("/home")
-	//if err1!=nil{
-	//	fmt.Println(err1)
-	//}else{
-	//	fmt.Println("切换目录成功")
-	//}
 	rect := new(Rect);
 	//注册一个rect服务
 	rpc.Register(rect);
@@ -286,8 +324,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err);
 	}
-	//status :=ProcessIsAlive(12,"a")
-	//fmt.Println(status)
-
 
 }

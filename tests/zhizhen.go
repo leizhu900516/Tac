@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"net"
 )
 
 func change(x *int){
@@ -41,6 +42,7 @@ func test(rpc Rpcparams){
 }
 var err error
 var cmdActionpath string
+var ipaddress string
 func init(){
 	cmdActionpath,err = exec.LookPath("bash")
 	if err != nil{
@@ -48,6 +50,23 @@ func init(){
 		os.Exit(5)
 	}
 	fmt.Println("cmdActionpath=xxx",cmdActionpath)
+}
+func gethostIp() string{
+	//get host ip address
+	addr,err:=net.InterfaceAddrs()
+	if err!=nil{
+		fmt.Println(err)
+	}
+	for _,address :=range addr{
+		if ipnet,ok :=address.(*net.IPNet);ok && !ipnet.IP.IsLoopback(){
+			if ipnet.IP.To4() != nil{
+				return  ipnet.IP.String()
+				break
+			}
+
+		}
+	}
+	return ""
 }
 func getProgramId(programname string) (int,error){
 	//获取程序pid
@@ -155,12 +174,26 @@ func main() {
 	//
 	//err=Run(aaa)
 	//fmt.Println(err)
-	pid,err :=getProgramId("test002.py")
-	if err != nil{
-		fmt.Println(err)
+	//pid,err :=getProgramId("test002.py")
+	//if err != nil{
+	//	fmt.Println(err)
+	//}
+	//fmt.Println("pid=",pid)
+	//var programname []string
+	//programname = strings.Split("python test002.py"," ")
+	//fmt.Println(programname[len(programname)-1])
+	var v interface{}
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < 10; i++{
+		v = i
+		if (r.Intn(100) % 2) == 0 {
+			v = "hello"
+		}
+
+		if _, ok := v.(int); ok {
+			fmt.Printf("%d\n", v)
+		}
 	}
-	fmt.Println("pid=",pid)
-	var programname []string
-	programname = strings.Split("python test002.py"," ")
-	fmt.Println(programname[len(programname)-1])
+
 }
