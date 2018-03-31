@@ -62,10 +62,7 @@ func init(){
 		os.Exit(5)
 	}
 	AgentConfig.InitConfig("./parserconfig/config")
-	db,err =sql.Open("mysql",AgentConfig.Read("mysqlurl"))
-	if err!=nil{
-		fmt.Println(">>>>",err)
-	}
+	db:=initDbConn()
 	localhostIp:=tools.GetHostIp()
 	sql:=fmt.Sprintf("select * from backgroundtask where ipaddress='%s'",localhostIp)
 	result :=tools.Select(db,sql)
@@ -79,13 +76,20 @@ func init(){
 			svnurl_split_slice :=strings.Split(url,"/")
 			svnpath:=svnurl_split_slice[len(svnurl_split_slice)-1]
 			action_cmd:=values["action_cmd"]
-			rpcparams:=Rpcparams{"root",action_cmd,"","",taskname,"",svnpath}
+			rpcparams:=Rpcparams{"root",action_cmd,"tacAgentlog.txt","tacAgentError.log",taskname,"",svnpath}
 			fmt.Println(rpcparams)
 			processmap[pid]=rpcparams
 		}
 	}
 }
-
+func initDbConn() *sql.DB{
+	db,err =sql.Open("mysql",AgentConfig.Read("mysqlurl"))
+	if err!=nil{
+		fmt.Println(">>>>",err)
+		return nil
+	}
+	return db
+}
 //函数必须是导出的
 //必须有两个导出类型参数
 //第一个参数是接收参数
@@ -101,13 +105,11 @@ func (r *Rect) Perimeter(p Params, ret *int) error {
 */
 func (r *Rect) Run (rpcparams Rpcparams,ret *string) error {
 	if rpcparams.Commandparams==""{
-		fmt.Println("xxxxxx")
 		*ret="-1"
 		return nil
 	}
 	//mkdir
 	taskpath :="/data/"+rpcparams.Path
-	fmt.Println("taskpath=",taskpath)
 	_,err := os.Stat(taskpath)
 	fmt.Println("......",err)
 	if os.IsNotExist(err){
@@ -123,7 +125,6 @@ func (r *Rect) Run (rpcparams Rpcparams,ret *string) error {
 	}else{
 		fmt.Println("dir exits")
 	}
-	fmt.Println("11112")
 	//svn代码拉取Comm
 	err =os.Chdir(taskpath)
 	if err != nil {
@@ -226,17 +227,17 @@ func ProcessIsAlive(pid string,value interface{}) bool{
 	return true
 }
 
-func start(pid string,rpcparams Rpcparams) bool{
+func start(pid string,rpcparams Rpcparams) (string,bool){
 	/*
 	启动函数
 	*/
 	taskpath :="/data/"+rpcparams.Path
 	err =os.Chdir(taskpath+"/"+rpcparams.Svnpath)
 	if err != nil {
-		local_dir,_:=os.Getwd()
-		fmt.Println("当前文件目录=",local_dir)
-		return false
+		return "-1",false
 	}
+	local_dir,_:=os.Getwd()
+	fmt.Println("当前文件目录=",local_dir)
 	programlist := strings.Split(rpcparams.Commandparams," ")
 	progranname := programlist[len(programlist)-1]
 	var cmdString string
@@ -251,19 +252,19 @@ func start(pid string,rpcparams Rpcparams) bool{
 	out,err := cmd.CombinedOutput()
 	if err !=nil{
 		fmt.Println(err)
-		return false
+		return "-1",false
 	}
 	newpid,err := getProgramId(progranname)
 	if err != nil{
 		fmt.Println(err)
-		return false
+		return "-1",false
 	}
 	delete(processmap,pid)
 	processmap[newpid]=rpcparams
 	s:=string(out)
 	fmt.Println(s)
 	//更新数据库的状态和pid
-	return true
+	return newpid,true
 }
 func stop(pid int) error{
 	/*
@@ -296,12 +297,17 @@ func Healthcheck(){
 			if status==false{
 				//死亡了。。。
 				var flag=0
+				db:=initDbConn()
 				sql:=fmt.Sprintf("update backgroundtask set status=%d where pid=%s",flag,k)
 				tools.Update(db,sql)
-				status:=start(k,v)
-				if status==true{
+				newsPid,status:=start(k,v)
+				if status==true && newsPid!="-1"{
 					flag =1
+					db:=initDbConn()
+					sql:=fmt.Sprintf("update backgroundtask set status=%d,pid=%s where pid=%s",flag,newsPid,k)
 					tools.Update(db,sql)
+				}else{
+					fmt.Println("start proc fail..")
 				}
 			}else {
 				//存活中。。。
