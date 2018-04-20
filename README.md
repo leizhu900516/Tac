@@ -9,10 +9,11 @@
 ![](/example/images/newAddTask.png '新建任务')
 
 #### 安装及使用
+- 登陆：默认用户名:密码  root:123456
 - agent部署
   - 配置文件修改/agent/parserconfig/config
   - agent目录运行 go run rpcServer.go 文件
 - web端部署
-  - 基于beego v1.9.1框架实现
+  - 后端->基于beego v1.9.1框架实现;前端->layui
   - clone代码到服务器。配置mysql服务。配置文件conf/app.conf
   - 运行项目 go run main.go
