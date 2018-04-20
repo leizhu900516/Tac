@@ -141,3 +141,16 @@ func Rpcclient(ip string,rpcparams Rpcparams) string{
 	fmt.Println(result1)
 	return result1
 }
+func RpcDelTaskClient(ip string,pid int) string{
+	//删除任务rpc客户端
+	ipaddress :=ip+":8081"
+	rpcClient,err := rpc2.DialHTTP("tcp",ipaddress)
+	if err !=nil{
+		fmt.Println(err)
+	}
+	var result string
+	err1 :=rpcClient.Call("Rect.Deltask",pid,&result);if err1!=nil{
+		fmt.Println(err)
+	}
+	return result
+}

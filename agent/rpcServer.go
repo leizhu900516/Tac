@@ -3,6 +3,12 @@ package main;
 @author:chenhuachao
 @time: 2018-02-09
 @ 计划任务的agent-server,配置文件在/parserconfig/config中
+@函数必须是导出的
+@必须有两个导出类型参数
+@第一个参数是接收参数
+@第二个参数是返回给客户端参数，必须是指针类型
+@函数还要有一个返回值error
+@run: go run rpcServer.go
 */
 import (
 	_"net/rpc"
@@ -90,16 +96,8 @@ func initDbConn() *sql.DB{
 	}
 	return db
 }
-//函数必须是导出的
-//必须有两个导出类型参数
-//第一个参数是接收参数
-//第二个参数是返回给客户端参数，必须是指针类型
-//函数还要有一个返回值error
 
-func (r *Rect) Perimeter(p Params, ret *int) error {
-	*ret = (p.Width + p.Height) * 2;
-	return nil;
-}
+
 /*
 *执行cmd命令的函数Run
 */
@@ -265,6 +263,19 @@ func start(pid string,rpcparams Rpcparams) (string,bool){
 	fmt.Println(s)
 	//更新数据库的状态和pid
 	return newpid,true
+}
+func (r *Rect) Deltask (pid int,ret *string) error {
+	//删除任务函数
+	strPid:=strconv.Itoa(pid)
+	err:=stop(pid)
+	if err!=nil{
+		*ret=err.Error()
+		return err
+	}
+	delete(processmap,strPid)
+	*ret="0"
+	return nil
+
 }
 func stop(pid int) error{
 	/*

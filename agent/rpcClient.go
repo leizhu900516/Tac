@@ -1,3 +1,4 @@
+//rpc测试的客户端用例
 package main;
 
 import (

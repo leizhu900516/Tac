@@ -6,7 +6,6 @@ import (
 	_"github.com/go-sql-driver/mysql"
 	"log"
 	"fmt"
-	_"reflect"
 	"strconv"
 	"encoding/json"
 	"time"
@@ -69,6 +68,9 @@ type BackgroundtaskManageGetController struct{
 	beego.Controller
 }
 type BackgroundtaskManagePostController struct{
+	beego.Controller
+}
+type DelgroundtaskManageGetController struct{
 	beego.Controller
 }
 
@@ -150,6 +152,26 @@ func (self *BackgroundtaskManagePostController) Post(){
 	self.ServeJSON()
 }
 
+func (self *DelgroundtaskManageGetController) Get(){
+	//删除任务
+	data := make(map[string]interface{})
+	taskid:=self.Input().Get("taskid")
+	ip:=self.Input().Get("ip")
+	pid,_:=strconv.Atoi(taskid)
+	result:=RpcDelTaskClient(ip,pid)
+	if result=="0"{
+		data["code"]=0
+		data["msg"]=""
+		data["data"]=""
+
+	}else{
+		data["code"]=1
+		data["msg"]=result
+		data["data"]=""
+	}
+	self.Data["json"]=data
+	self.ServeJSON()
+}
 func selectSqlData(db *sql.DB,sql string) ([]map[string]string,int){
 	/*sql查询返回数据*/
 	result :=make([]map[string]string,0)
