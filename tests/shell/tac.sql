@@ -2,7 +2,8 @@
 SQLyog  v12.2.6 (64 bit)
 MySQL - 5.7.20-log : Database - tac
 *********************************************************************
-*/
+*/
+
 
 /*!40101 SET NAMES utf8 */;
 
@@ -42,3 +43,14 @@ CREATE TABLE `backgroundtask` (
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+
+CREATE TABLE `userinfo` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) DEFAULT NULL COMMENT '用户名',
+  `password` varchar(100) DEFAULT NULL COMMENT '密码',
+  `addtimes` int(10) DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表'
+
+insert into `userinfo` (`id`, `username`, `password`, `addtimes`) values('1','root','123456',NULL);

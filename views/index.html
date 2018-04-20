@@ -25,12 +25,22 @@
             </li>
         </ul>
         <ul class="layui-nav fly-nav-user">
-            <li class="layui-nav-item">
-                <a id="login">登入</a>
-            </li>
-            <li class="layui-nav-item">
-                <a id="register" rel="nofollow">注册</a>
-            </li>
+            {{if .name}}
+                        <li class="layui-nav-item">
+                            <a id="login">{{.name}}</a>
+                        </li>
+                        <li class="layui-nav-item">
+                            <a id="register" rel="nofollow">退出</a>
+                        </li>
+                    {{else}}
+                        <li class="layui-nav-item">
+                            <a id="login">登入</a>
+                        </li>
+                        <li class="layui-nav-item">
+                            <a id="register" rel="nofollow">注册</a>
+                        </li>
+             {{end}}
+
             <span class="layui-nav-bar"></span>
         </ul>
     </div>

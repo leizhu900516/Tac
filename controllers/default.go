@@ -17,8 +17,64 @@ import (
 type MainController struct {
 	beego.Controller
 }
+type LoginController struct{
+	beego.Controller
+}
+type AuthController struct {
+	beego.Controller
+}
+type BackgroundtaskManageDeleteController struct{
+	beego.Controller
+}
+type BackgroundtaskManageGetController struct{
+	beego.Controller
+}
+type BackgroundtaskManagePostController struct{
+	beego.Controller
+}
+type DelgroundtaskManageGetController struct{
+	beego.Controller
+}
+type BackgroundtaskController struct {
+	beego.Controller
+}
+func (self *AuthController) Post(){
+	var data =make(map[string]interface{})
+	var params map[string]string
+	json.Unmarshal(self.Ctx.Input.RequestBody,&params)
+	username:=params["username"]
+	password:=params["password"]
+	db,err:=sql.Open("mysql",beego.AppConfig.String("mysqlurl"))
+	if err!=nil{
+		fmt.Println(err)
+	}
+	var id int
+	err=db.QueryRow("select id from userinfo where username=? and password=?",username,password).Scan(&id)
+	if err!=nil{
+		fmt.Println(err)
+		data["code"]=1
+		data["msg"]=err.Error()
+		data["data"]=""
+	}
+	if id >=0{
+		data["code"]=0
+		data["msg"]="登陆成功"
+		data["data"]=""
+		self.Ctx.SetCookie("u-tac",username,3600*24,"/")
+	}
+	self.Data["json"]=data
+	fmt.Println(data)
+	self.ServeJSON()
 
-func (c *MainController) Get() {
+}
+func ( self *LoginController) Get() {
+	self.TplName = "login.html"
+}
+func (self *MainController) Get() {
+	name :=self.Ctx.GetCookie("u-tac")
+	if name== ""{
+		self.Ctx.Redirect(302,"/login",)
+	}
 	db,err := sql.Open("mysql",beego.AppConfig.String("mysqlurl"))
 	if err !=nil{
 		log.Fatal(err)
@@ -28,20 +84,19 @@ func (c *MainController) Get() {
 	result,count := selectSqlData(db,sql)
 	iplist,ipcount :=selectSqlData(db,ipsql)
 	defer db.Close()
-	c.Data["Website"] = "beego.me"
-	c.Data["Email"] = "astaxie@gmail.com"
-	c.Data["data"]=result
-	c.Data["count"]=count
-	c.Data["iplist"]=iplist
-	c.Data["ipcount"]=ipcount
-	c.TplName = "index.html"
+	self.Data["Website"] = "beego.me"
+	self.Data["Email"] = "astaxie@gmail.com"
+	self.Data["data"]=result
+	self.Data["count"]=count
+	self.Data["name"]=name
+	self.Data["iplist"]=iplist
+	self.Data["ipcount"]=ipcount
+	self.TplName = "index.html"
 }
 /*
 后台任务获取
 */
-type BackgroundtaskController struct {
-	beego.Controller
-}
+
 func (self *BackgroundtaskController) Get(){
 	db,err := sql.Open("mysql",beego.AppConfig.String("mysqlurl"))
 	if err !=nil{
@@ -57,21 +112,6 @@ func (self *BackgroundtaskController) Get(){
 	self.Data["json"]=data
 	self.ServeJSON()
 
-}
-
-
-
-type BackgroundtaskManageDeleteController struct{
-	beego.Controller
-}
-type BackgroundtaskManageGetController struct{
-	beego.Controller
-}
-type BackgroundtaskManagePostController struct{
-	beego.Controller
-}
-type DelgroundtaskManageGetController struct{
-	beego.Controller
 }
 
 func (self *BackgroundtaskManageDeleteController) Delete(){
