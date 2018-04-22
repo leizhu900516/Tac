@@ -17,7 +17,10 @@ import (
 type MainController struct {
 	beego.Controller
 }
-type LoginController struct{
+type LoginController struct {
+	beego.Controller
+}
+type QuitController struct {
 	beego.Controller
 }
 type AuthController struct {
@@ -38,6 +41,10 @@ type DelgroundtaskManageGetController struct{
 type BackgroundtaskController struct {
 	beego.Controller
 }
+func (self *QuitController) Get(){
+	self.Ctx.SetCookie("u-tac","")
+	self.TplName="login.html"
+}
 func (self *AuthController) Post(){
 	var data =make(map[string]interface{})
 	var params map[string]string
@@ -51,7 +58,6 @@ func (self *AuthController) Post(){
 	var id int
 	err=db.QueryRow("select id from userinfo where username=? and password=?",username,password).Scan(&id)
 	if err!=nil{
-		fmt.Println(err)
 		data["code"]=1
 		data["msg"]=err.Error()
 		data["data"]=""
