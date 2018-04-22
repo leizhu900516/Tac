@@ -44,7 +44,13 @@ CREATE TABLE `backgroundtask` (
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
-
+CREATE TABLE `taskip` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `ip` varchar(15) DEFAULT NULL COMMENT '主机ip',
+  `state` tinyint(4) DEFAULT NULL COMMENT '1启用0弃用',
+  `addtimes` int(10) DEFAULT NULL COMMENT '入库时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 CREATE TABLE `userinfo` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(100) DEFAULT NULL COMMENT '用户名',

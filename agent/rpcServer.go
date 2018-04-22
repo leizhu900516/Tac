@@ -59,7 +59,20 @@ type Rpcparams struct {
 type Rect struct{}
 //进程map缓存：{pid:"pname"}
 var processmap =make(map[string]Rpcparams)
-
+func init(){
+	//主机自动注册
+	ip:=tools.GetHostIp()
+	sql:=fmt.Sprintf("insert into taskip (ip,state,addtimes) values('%s',1,%d)",ip,123)
+	sql1:=fmt.Sprintf("select ip from taskip where ip=%s",ip)
+	checkip:=tools.Select(db,sql1)
+	if len(checkip)>0{
+		updatesql:=fmt.Sprintf("update  taskip set state=1 where ip=%s",ip)
+		tools.Update(db,updatesql)
+	}else {
+		db:=initDbConn()
+		tools.Update(db,sql)
+	}
+}
 
 func init(){
 	cmdActionpath,err = exec.LookPath("bash")

@@ -57,7 +57,9 @@ func  Select(db *sql.DB,sql string) []map[string]string{
 	}
 	return result
 }
+
 func Update(db *sql.DB,sql string){
+	//update sql
 	stmt,err :=db.Prepare(sql)
 	defer db.Close()
 	if err!=nil{
